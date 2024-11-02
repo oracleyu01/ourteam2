@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, render_template_string, url_for
+from flask import Flask, request, render_template_string, url_for
 from ultralytics import YOLO
 import tempfile
 import cv2
@@ -6,7 +6,7 @@ from moviepy.editor import VideoFileClip
 import os
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static'
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static')  # 절대 경로로 설정
 
 # HTML 템플릿 (원본 및 검출된 비디오 재생을 위한 비디오 태그 추가)
 HTML_TEMPLATE = """
@@ -68,6 +68,10 @@ def process_video():
     # YOLO 모델 로드
     model = YOLO(model_path)
 
+    # static 폴더가 없으면 생성
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+
     # 원본 비디오 파일 저장 경로 설정
     original_video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_file.filename)
     video_file.save(original_video_path)
@@ -124,6 +128,4 @@ def process_video():
     return render_template_string(HTML_TEMPLATE, original_video_url=original_video_url, processed_video_url=processed_video_url)
 
 if __name__ == "__main__":
-    if not os.path.exists('static'):
-        os.makedirs('static')
     app.run(debug=True)
